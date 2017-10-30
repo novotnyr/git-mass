@@ -1,0 +1,107 @@
+#!/bin/sh
+
+COMMAND="$1"
+IGNORED_MODULES=$(cat .ignored_modules)
+
+is_allowed() {
+  for M in $IGNORED_MODULES
+  do
+    if [ "./$M/" = "$1" ]
+    then
+      return 1
+    fi 
+  done
+}
+
+switch_module_branch() {
+	MODULE="$1"
+	BRANCH="$3"
+	
+	[ -n "$BRANCH" ] || { echo "No branch was specified" ; exit 1; }
+	
+	cd "$MODULE" || return 
+	git checkout "$BRANCH"
+	echo "$MODULE switch to branch $BRANCH"
+	cd .. 
+}
+
+git_pull_rebase() {
+	MODULE="$1"
+	cd "$MODULE" || return
+	echo "Git Pull Rebase> $MODULE"
+	git pull --rebase
+	cd ..
+}
+
+full_merge() {
+	MODULE="$1"
+	SOURCE_BRANCH="$3"
+	TARGET_BRANCH="$4"
+	
+	cd "$MODULE" || return
+	
+	[ -n "$SOURCE_BRANCH" ] || { echo "No source branch was specified" ; exit 1; }
+	[ -n "$TARGET_BRANCH" ] || { echo "No target branch was specified" ; exit 1; }
+	
+	echo "----------------------------------------------"
+	echo "Merge $SOURCE_BRANCH -> $TARGET_BRANCH> $MODULE"
+	
+	git checkout "$TARGET_BRANCH" && \
+		git branch --set-upstream-to=origin/"$TARGET_BRANCH" && \
+		    git pull --rebase && git merge "$SOURCE_BRANCH" && git push && git checkout "$SOURCE_BRANCH"
+		    
+	cd ..
+}
+
+last_commit_date() {
+	MODULE="$1"
+	BRANCH="$3"
+
+	cd "$MODULE" || return
+
+        [ -n "$BRANCH" ] || { echo "No branch was specified"; exit 1; }
+
+        LAST_COMMIT_DATE=$(git log --all --format="%ar;%d" | grep "$BRANCH" | cut -d";" -f1)
+        printf "%-64s %s\n" "$MODULE" "$LAST_COMMIT_DATE"
+        
+        cd ..
+}
+
+list_module() {
+	MODULE="$1"
+	cd "$MODULE" || return
+	
+	pwd
+	
+	cd ..
+}
+
+[ -n "$COMMAND" ] || { echo "No command was specified" ; exit 1; }
+
+for MODULE in ./*/
+do
+	if is_allowed "$MODULE"
+	then
+		case "$COMMAND" in
+		list)
+			list_module "$MODULE" "$@"
+			;;
+		checkout)
+        		switch_module_branch "$MODULE" "$@"
+        		;;
+        	pull-rebase)
+        		git_pull_rebase "$MODULE" "$@"
+        		;;
+        	full-merge)
+        		full_merge "$MODULE" "$@"
+        		;;
+        	last-commit-date)
+        		last_commit_date "$MODULE" "$@"
+        		;;
+        	*)
+        		echo "Unknown command: $COMMAND"
+        		exit 1
+        		;;
+        	esac
+	fi
+done
