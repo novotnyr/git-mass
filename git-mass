@@ -77,6 +77,22 @@ list_module() {
 	cd ..
 }
 
+reset_hard() {
+	MODULE="$1"
+	BRANCH="$3"
+	
+	cd "$MODULE" || return
+	
+	[ -n "$BRANCH" ] || { echo "No branch was specified" ; exit 1; }
+	
+	echo "----------------------------------------------"
+	echo "Resetting (hard) to branch $BRANCH > $MODULE"
+	
+	git reset --hard "$BRANCH"
+	
+	cd ..
+}
+
 [ -n "$COMMAND" ] || { echo "No command was specified" ; exit 1; }
 
 for MODULE in ./*/
@@ -98,6 +114,9 @@ do
         		;;
         	last-commit-date)
         		last_commit_date "$MODULE" "$@"
+        		;;
+        	reset-hard)
+        		reset_hard "$MODULE" "$@"
         		;;
         	*)
         		echo "Unknown command: $COMMAND"
