@@ -37,6 +37,7 @@ full_merge() {
 	MODULE="$1"
 	SOURCE_BRANCH="$3"
 	TARGET_BRANCH="$4"
+	[ "$5" = "push" ] && GIT_PUSH="git push" || GIT_PUSH="true"
 	
 	cd "$MODULE" || return
 	
@@ -48,8 +49,8 @@ full_merge() {
 	
 	git checkout "$TARGET_BRANCH" && \
 		git branch --set-upstream-to=origin/"$TARGET_BRANCH" && \
-		    git pull --rebase && git merge "$SOURCE_BRANCH" && git push && git checkout "$SOURCE_BRANCH"
-		    
+		    git pull --rebase && git merge "$SOURCE_BRANCH" && "$GIT_PUSH" && git checkout "$SOURCE_BRANCH"
+	
 	cd ..
 }
 
