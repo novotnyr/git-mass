@@ -13,11 +13,16 @@ is_allowed() {
   done
 }
 
+die() {
+    echo "$1"
+    exit 1
+}
+
 switch_module_branch() {
 	MODULE="$1"
 	BRANCH="$3"
 	
-	[ -n "$BRANCH" ] || { echo "No branch was specified" ; exit 1; }
+	[ "$BRANCH" ] || die "No branch was specified"
 	
 	cd "$MODULE" || return 
 	git checkout "$BRANCH"
@@ -41,8 +46,8 @@ full_merge() {
 	
 	cd "$MODULE" || return
 	
-	[ -n "$SOURCE_BRANCH" ] || { echo "No source branch was specified" ; exit 1; }
-	[ -n "$TARGET_BRANCH" ] || { echo "No target branch was specified" ; exit 1; }
+	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
+	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
 	
 	echo "----------------------------------------------"
 	echo "Merge $SOURCE_BRANCH -> $TARGET_BRANCH> $MODULE"
@@ -60,7 +65,7 @@ last_commit_date() {
 
 	cd "$MODULE" || return
 
-        [ -n "$BRANCH" ] || { echo "No branch was specified"; exit 1; }
+        [ "$BRANCH" ] || die "No branch was specified"
 
         LAST_COMMIT_DATE=$(git log --all --format="%ar;%d" | grep "$BRANCH" | cut -d";" -f1)
         printf "%-64s %s\n" "$MODULE" "$LAST_COMMIT_DATE"
@@ -83,7 +88,7 @@ reset_hard() {
 	
 	cd "$MODULE" || return
 	
-	[ -n "$BRANCH" ] || { echo "No branch was specified" ; exit 1; }
+	[ "$BRANCH" ] || die "No branch was specified" 
 	
 	echo "----------------------------------------------"
 	echo "Resetting (hard) to branch $BRANCH > $MODULE"
@@ -93,7 +98,7 @@ reset_hard() {
 	cd ..
 }
 
-[ -n "$COMMAND" ] || { echo "No command was specified" ; exit 1; }
+[ "$COMMAND" ] || die "No command was specified"
 
 for MODULE in ./*/
 do
