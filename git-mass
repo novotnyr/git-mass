@@ -40,21 +40,52 @@ git_pull_rebase() {
 
 full_merge() {
 	MODULE="$1"
-	SOURCE_BRANCH="$3"
-	TARGET_BRANCH="$4"
-	[ "$5" = "push" ] && GIT_PUSH="git push" || GIT_PUSH="true"
+	shift 2
+	OPTIND=""
 	
-	cd "$MODULE" || return
-	
+	GIT_PUSH="true"
+	COMMIT_MESSAGE_TEXT=""
+	COMMIT_MESSAGE_PARAM="--log --no-edit -m"
+	while getopts "pm:" OPT "$@"
+	do
+		case "$OPT" in
+			p)
+				GIT_PUSH="git push"
+				;;
+			m)
+				COMMIT_MESSAGE_TEXT="$OPTARG"
+				;;
+			\?)
+				echo "Invalid option -$OPT" >&2
+				exit 1
+				;;
+			:)
+				echo "Option $OPT requires an argument" >&2
+				exit 1
+				;;
+		esac
+	done
+	eval SOURCE_BRANCH='$'$OPTIND
+	eval TARGET_BRANCH='$'$(($OPTIND + 1))
 	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
 	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
 	
+	cd "$MODULE" || return
+
 	echo "----------------------------------------------"
 	echo "Merge $SOURCE_BRANCH -> $TARGET_BRANCH> $MODULE"
 	
+	if [ -z "$COMMIT_MESSAGE_TEXT" ] 
+	then
+		COMMIT_MESSAGE_TEXT="Merge $SOURCE_BRANCH into $TARGET_BRANCH"
+	fi
+	
 	git checkout "$TARGET_BRANCH" && \
 		git branch --set-upstream-to=origin/"$TARGET_BRANCH" && \
-		    git pull --rebase && git merge "$SOURCE_BRANCH" && "$GIT_PUSH" && git checkout "$SOURCE_BRANCH"
+			git pull --rebase &&  \
+				git merge --no-ff $COMMIT_MESSAGE_PARAM "$COMMIT_MESSAGE_TEXT" "$SOURCE_BRANCH" && \
+					"$GIT_PUSH" && \
+						git checkout "$SOURCE_BRANCH"
 	
 	cd ..
 }
