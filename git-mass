@@ -129,6 +129,22 @@ reset_hard() {
 	cd ..
 }
 
+execute_command() {
+	MODULE="$1"
+	
+	cd "$MODULE" || return
+	
+	echo "----------------------------------------------"
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+	
+	echo "$MODULE> git $@"
+	
+	git "$@"
+	
+	cd ..
+}
+
 [ "$COMMAND" ] || die "No command was specified"
 
 for MODULE in ./*/
@@ -153,6 +169,9 @@ do
         		;;
         	reset-hard)
         		reset_hard "$MODULE" "$@"
+        		;;
+        	exec)
+        		execute_command "$MODULE" "$@"
         		;;
         	*)
         		echo "Unknown command: $COMMAND"

@@ -36,7 +36,7 @@ Executes a merge from a specified branch to target branch. Before merging, updat
 
 	./git-mass full-merge -m "GL-0 Merge 'gl-0' to 'master'" gl-0 master
 
-### Full Merge & Push
+### Full Merge & Push
 
 	./git-mass full-merge -p -m "GL-0 Merge 'gl-0' to 'master'" gl-0 master
 
