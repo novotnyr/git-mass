@@ -46,7 +46,18 @@ Last Commit Date
 Shows last commit dates on each subdirectory
 
     ./git-mass last-commit-date
-    
+
+Forward diff between two branches
+---------------------------------
+
+Shows whether a specific branch is behind another branch, so it can be merged.
+
+    ./git-mass fwdiff dev master
+
+Output:
+
+    ./backend/> dev is behind master
+
 Hard Reset
 -----------
 

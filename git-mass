@@ -3,6 +3,10 @@
 COMMAND="$1"
 IGNORED_MODULES=$(cat .ignored_modules)
 
+RED_COLOR='\033[0;31m'
+GREEN_COLOR='\033[0;32m'
+NO_COLOR='\033[0m'
+
 is_allowed() {
   for M in $IGNORED_MODULES
   do
@@ -11,6 +15,14 @@ is_allowed() {
       return 1
     fi 
   done
+}
+
+has_branch() {
+	BRANCH="$1"
+	[ "BRANCH" ] || die "No branch was specified"
+
+	git rev-parse --quiet --verify "$BRANCH" > /dev/null
+	return $?
 }
 
 die() {
@@ -131,19 +143,57 @@ reset_hard() {
 
 execute_command() {
 	MODULE="$1"
-	
+
 	cd "$MODULE" || return
-	
+
 	echo "----------------------------------------------"
 
 	shift 2 # let's shift parameters to eat $MODULE and command name
-	
+
 	echo "$MODULE> git $@"
-	
+
 	git "$@"
-	
+
 	cd ..
 }
+
+fwdiff() {
+	MODULE="$1"
+	cd "$MODULE" || return
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+
+	SOURCE_BRANCH="$1"
+	TARGET_BRANCH="$2"
+	VERBOSE="$3"
+	
+	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
+	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
+
+	if ! has_branch "$SOURCE_BRANCH" || ! has_branch "$TARGET_BRANCH"
+	then
+		if [ "$VERBOSE" ]
+		then
+			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
+		fi
+		cd .. 
+		return
+	fi
+
+	if git merge-base --is-ancestor "$SOURCE_BRANCH" "$TARGET_BRANCH"
+	then
+		if [ "$VERBOSE" ]
+		then
+			echo "$MODULE> No need to merge $SOURCE_BRANCH to $TARGET_BRANCH"
+		fi
+	else
+		echo "$GREEN_COLOR$MODULE$NO_COLOR> $SOURCE_BRANCH is behind $TARGET_BRANCH"
+	fi
+
+        cd ..
+
+}
+
 
 [ "$COMMAND" ] || die "No command was specified"
 
@@ -170,6 +220,9 @@ do
         	reset-hard)
         		reset_hard "$MODULE" "$@"
         		;;
+			fwdiff)
+				fwdiff "$MODULE" "$@"
+				;;
         	exec)
         		execute_command "$MODULE" "$@"
         		;;
