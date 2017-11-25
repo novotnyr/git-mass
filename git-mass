@@ -5,6 +5,7 @@ IGNORED_MODULES=$(cat .ignored_modules)
 
 RED_COLOR='\033[0;31m'
 GREEN_COLOR='\033[0;32m'
+GRAY_COLOR='\033[0;2m'
 NO_COLOR='\033[0m'
 
 is_allowed() {
@@ -35,10 +36,17 @@ switch_module_branch() {
 	BRANCH="$3"
 	
 	[ "$BRANCH" ] || die "No branch was specified"
-	
-	cd "$MODULE" || return 
-	git checkout "$BRANCH"
-	echo "$MODULE switch to branch $BRANCH"
+
+	cd "$MODULE" || return
+
+	if git rev-parse --quiet --verify "$BRANCH" > /dev/null
+	then
+		git checkout --quiet "$BRANCH"
+		echo "$GREEN_COLOR$MODULE$NO_COLOR switched to branch $BRANCH"
+	else
+		echo "$GRAY_COLOR$MODULE$NO_COLOR> No branch $BRANCH"
+	fi
+
 	cd .. 
 }
 
