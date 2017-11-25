@@ -206,6 +206,8 @@ fwdiff() {
 
 for MODULE in ./*/
 do
+	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
+
 	if is_allowed "$MODULE"
 	then
 		case "$COMMAND" in
