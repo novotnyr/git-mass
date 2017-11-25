@@ -9,13 +9,13 @@ GRAY_COLOR='\033[0;2m'
 NO_COLOR='\033[0m'
 
 is_allowed() {
-  for M in $IGNORED_MODULES
-  do
-    if [ "./$M/" = "$1" ]
-    then
-      return 1
-    fi 
-  done
+	for M in $IGNORED_MODULES
+	do
+		if [ "./$M/" = "$1" ]
+		then
+			return 1
+		fi
+	done
 }
 
 has_branch() {
@@ -27,8 +27,8 @@ has_branch() {
 }
 
 die() {
-    echo "$1"
-    exit 1
+	echo "$1"
+	exit 1
 }
 
 switch_module_branch() {
@@ -116,12 +116,12 @@ last_commit_date() {
 
 	cd "$MODULE" || return
 
-        [ "$BRANCH" ] || die "No branch was specified"
+	[ "$BRANCH" ] || die "No branch was specified"
 
-        LAST_COMMIT_DATE=$(git log --all --format="%ar;%d" | grep "$BRANCH" | cut -d";" -f1)
-        printf "%-64s %s\n" "$MODULE" "$LAST_COMMIT_DATE"
-        
-        cd ..
+	LAST_COMMIT_DATE=$(git log --all --format="%ar;%d" | grep "$BRANCH" | cut -d";" -f1)
+	printf "%-64s %s\n" "$MODULE" "$LAST_COMMIT_DATE"
+
+	cd ..
 }
 
 list_module() {
@@ -198,8 +198,7 @@ fwdiff() {
 		echo "$GREEN_COLOR$MODULE$NO_COLOR> $SOURCE_BRANCH is behind $TARGET_BRANCH"
 	fi
 
-        cd ..
-
+	cd ..
 }
 
 
@@ -214,30 +213,30 @@ do
 			list_module "$MODULE" "$@"
 			;;
 		checkout)
-        		switch_module_branch "$MODULE" "$@"
-        		;;
-        	pull-rebase)
-        		git_pull_rebase "$MODULE" "$@"
-        		;;
-        	full-merge)
-        		full_merge "$MODULE" "$@"
-        		;;
-        	last-commit-date)
-        		last_commit_date "$MODULE" "$@"
-        		;;
-        	reset-hard)
-        		reset_hard "$MODULE" "$@"
-        		;;
-			fwdiff)
-				fwdiff "$MODULE" "$@"
-				;;
-        	exec)
-        		execute_command "$MODULE" "$@"
-        		;;
-        	*)
-        		echo "Unknown command: $COMMAND"
-        		exit 1
-        		;;
-        	esac
+			switch_module_branch "$MODULE" "$@"
+			;;
+		pull-rebase)
+			git_pull_rebase "$MODULE" "$@"
+			;;
+		full-merge)
+			full_merge "$MODULE" "$@"
+			;;
+		last-commit-date)
+			last_commit_date "$MODULE" "$@"
+			;;
+		reset-hard)
+			reset_hard "$MODULE" "$@"
+			;;
+		fwdiff)
+			fwdiff "$MODULE" "$@"
+			;;
+		exec)
+			execute_command "$MODULE" "$@"
+			;;
+		*)
+			echo "Unknown command: $COMMAND"
+			exit 1
+			;;
+        esac
 	fi
 done
