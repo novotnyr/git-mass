@@ -1,7 +1,7 @@
 #!/bin/sh
 
 COMMAND="$1"
-IGNORED_MODULES=$(cat .ignored_modules)
+IGNORED_MODULES=$(cat .ignored_modules 2> /dev/null)
 
 RED_COLOR='\033[0;31m'
 GREEN_COLOR='\033[0;32m'
@@ -39,10 +39,10 @@ switch_module_branch() {
 
 	cd "$MODULE" || return
 
-	if git rev-parse --quiet --verify "$BRANCH" > /dev/null
+	if has_branch "$BRANCH"
 	then
 		git checkout --quiet "$BRANCH"
-		echo "$GREEN_COLOR$MODULE$NO_COLOR switched to branch $BRANCH"
+		echo "$GREEN_COLOR$MODULE$NO_COLOR switched to $BRANCH"
 	else
 		echo "$GRAY_COLOR$MODULE$NO_COLOR> No branch $BRANCH"
 	fi
