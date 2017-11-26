@@ -58,6 +58,15 @@ Output:
 
     ./backend/> dev is behind master
 
+Changed files between branches
+------------------------------
+
+Indicates which files have been changed between branches.
+
+    ./git-mass namediff dev master
+
+Internally, the `git diff --name-only` is used.
+
 Hard Reset
 -----------
 

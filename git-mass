@@ -201,6 +201,42 @@ fwdiff() {
 	cd ..
 }
 
+diff_name_only() {
+	MODULE="$1"
+	cd "$MODULE" || return
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+
+	SOURCE_BRANCH="$1"
+	TARGET_BRANCH="$2"
+	VERBOSE="$3"
+
+	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
+	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
+
+	if ! has_branch "$SOURCE_BRANCH" || ! has_branch "$TARGET_BRANCH"
+	then
+		if [ "$VERBOSE" ]
+		then
+			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
+		fi
+		cd ..
+		return
+	fi
+
+	DIFF_RESULT=$(git diff --name-only "$SOURCE_BRANCH" "$TARGET_BRANCH")
+	if [ "$DIFF_RESULT" ]
+	then
+		DIFF_RESULT=$(echo "$DIFF_RESULT" | xargs printf "\t%s\n")
+		echo "$GREEN_COLOR$MODULE$NO_COLOR>"
+		echo "$DIFF_RESULT"
+	else
+		[ "$VERBOSE" ] && echo "$GRAY_COLOR$MODULE$NO_COLOR> No diff"
+	fi
+
+	cd ..
+}
+
 
 [ "$COMMAND" ] || die "No command was specified"
 
@@ -231,6 +267,9 @@ do
 			;;
 		fwdiff)
 			fwdiff "$MODULE" "$@"
+			;;
+		namediff)
+			diff_name_only "$MODULE" "$@"
 			;;
 		exec)
 			execute_command "$MODULE" "$@"
