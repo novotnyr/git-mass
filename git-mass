@@ -51,9 +51,10 @@ switch_module_branch() {
 
 git_pull_rebase() {
 	MODULE="$1"
+	shift 2 # let's shift parameters to eat $MODULE and command name
 	cd "$MODULE" || return
-	echo "Git Pull Rebase> $MODULE"
-	git pull --rebase
+	RESULT=$(git pull --rebase)
+	echo "$GREEN_COLOR$MODULE$NO_COLOR> $RESULT"
 	cd ..
 }
 
@@ -358,6 +359,9 @@ do
 			;;
 		fwdiff)
 			fwdiff "$MODULE" "$@"
+			;;
+		dirdiff)
+			diff_name_only "$MODULE" "$@"
 			;;
 		namediff)
 			diff_name_only "$MODULE" "$@"
