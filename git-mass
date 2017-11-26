@@ -71,25 +71,6 @@ cmd_switch_module_branch() {
 	fi
 }
 
-switch_module_branch() {
-	MODULE="$1"
-	BRANCH="$3"
-	
-	[ "$BRANCH" ] || die "No branch was specified"
-
-	cd "$MODULE" || return
-
-	if has_branch "$BRANCH"
-	then
-		git checkout --quiet "$BRANCH"
-		echo "$GREEN_COLOR$MODULE$NO_COLOR switched to $BRANCH"
-	else
-		echo "$GRAY_COLOR$MODULE$NO_COLOR> No branch $BRANCH"
-	fi
-
-	cd .. 
-}
-
 pull_rebase() {
 	MODULE="$1"
 	shift 2 # let's shift parameters to eat $MODULE and command name
@@ -380,16 +361,19 @@ for MODULE in ./*/
 do
 	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
 
-	if _before_module "$MODULE"
+	if is_allowed "$MODULE"
 	then
-		case "$COMMAND" in
-		checkout)
-			cmd_switch_module_branch "$MODULE" "$@"
-			CMD_HANDLED=true
-			;;
-		esac
+		if _before_module "$MODULE"
+		then
+			case "$COMMAND" in
+			checkout)
+				cmd_switch_module_branch "$MODULE" "$@"
+				CMD_HANDLED=true
+				;;
+			esac
 
-		_after_module
+			_after_module
+		fi
 	fi
 done
 
