@@ -1,5 +1,4 @@
 #!/bin/sh
-
 COMMAND="$1"
 IGNORED_MODULES=$(cat .ignored_modules 2> /dev/null)
 
@@ -20,7 +19,7 @@ is_allowed() {
 
 has_branch() {
 	BRANCH="$1"
-	[ "BRANCH" ] || die "No branch was specified"
+	[ "$BRANCH" ] || die "No branch was specified"
 
 	git rev-parse --quiet --verify "$BRANCH" > /dev/null
 	return $?
@@ -280,6 +279,56 @@ cleanup_unchanged_branches() {
 	cd ..
 }
 
+grep_string() {
+	MODULE="$1"
+	cd "$MODULE" || return
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+
+	REGEXP="$1"
+
+	GIT_LOG=$(git log --all --regexp-ignore-case --pretty=oneline --grep="$REGEXP")
+	if [ "$GIT_LOG" ]
+	then
+		printf "$GREEN_COLOR$MODULE$NO_COLOR>\n"
+		GIT_LOG=$(echo "$GIT_LOG" | xargs -I{} printf '\t%s\n' {})
+		echo "$GIT_LOG"
+	fi
+
+	cd ..
+}
+
+update_all_remote_branches() {
+	MODULE="$1"
+
+	cd "$MODULE" || return
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+
+	git fetch --all > /dev/null || die "Unable to fetch all remote branches"
+
+	# maintain a list of already tracked branches
+	ALREADY_TRACKED_BRANCHES=""
+	# lists all remotes, except entries like 'origin/HEAD -> origin/master'
+	for REMOTE_BRANCH in $(git branch --remote | grep -Fv ' -> ')
+	do
+		LOCAL_BRANCH="${REMOTE_BRANCH#*/}"
+		if has_branch "$LOCAL_BRANCH"
+		then
+			ALREADY_TRACKED_BRANCHES="$ALREADY_TRACKED_BRANCHES $LOCAL_BRANCH"
+		else
+			git branch "$LOCAL_BRANCH" --track "$REMOTE_BRANCH"
+		fi
+	done
+
+	if [ "$ALREADY_TRACKED_BRANCHES" ]
+	then
+		echo "$GREEN_COLOR$MODULE$NO_COLOR> Already tracked: $ALREADY_TRACKED_BRANCHES"
+	fi
+
+	cd ..
+}
+
 [ "$COMMAND" ] || die "No command was specified"
 
 for MODULE in ./*/
@@ -318,6 +367,15 @@ do
 			;;
 		cub)
 			cleanup_unchanged_branches "$MODULE" "$@"
+			;;
+		grep)
+			grep_string "$MODULE" "$@"
+			;;
+		uarb)
+			update_all_remote_branches "$MODULE" "$@"
+			;;
+		update-all-remote-branches)
+			update_all_remote_branches "$MODULE" "$@"
 			;;
 		exec)
 			execute_command "$MODULE" "$@"
