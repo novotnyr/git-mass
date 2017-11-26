@@ -237,6 +237,48 @@ diff_name_only() {
 	cd ..
 }
 
+# Remove a branch that has no changes or diffs with
+# the source branch.
+cleanup_unchanged_branches() {
+	MODULE="$1"
+	cd "$MODULE" || return
+
+	shift 2 # let's shift parameters to eat $MODULE and command name
+
+	SOURCE_BRANCH="$1"
+	TARGET_BRANCH="$2"
+	VERBOSE="$3"
+
+	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
+	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
+
+	if ! has_branch "$SOURCE_BRANCH" || ! has_branch "$TARGET_BRANCH"
+	then
+		if [ "$VERBOSE" ]
+		then
+			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
+		fi
+		cd ..
+		return
+	fi
+
+	DIFF_RESULT=$(git diff --name-only "$SOURCE_BRANCH" "$TARGET_BRANCH")
+	if [ -z "$DIFF_RESULT" ]
+	then
+		# read does not support color codes. We print colored message without \n
+		printf "$GREEN_COLOR$MODULE$NO_COLOR> $TARGET_BRANCH has no differences with $SOURCE_BRANCH."
+		read -p "Type 'y' to delete it> " INPUT
+		if [ "y" = "$INPUT" ]
+		then
+			git checkout "$SOURCE_BRANCH"
+			git branch -d "$TARGET_BRANCH"
+		else
+			echo "$MODULE> $TARGET_BRANCH left intact"
+		fi
+	fi
+
+	cd ..
+}
 
 [ "$COMMAND" ] || die "No command was specified"
 
@@ -270,6 +312,12 @@ do
 			;;
 		namediff)
 			diff_name_only "$MODULE" "$@"
+			;;
+		cleanup-unchanged-brances)
+			cleanup_unchanged_branches "$MODULE" "$@"
+			;;
+		cub)
+			cleanup_unchanged_branches "$MODULE" "$@"
 			;;
 		exec)
 			execute_command "$MODULE" "$@"
