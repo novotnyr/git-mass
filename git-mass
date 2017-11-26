@@ -49,7 +49,7 @@ switch_module_branch() {
 	cd .. 
 }
 
-git_pull_rebase() {
+pull_rebase() {
 	MODULE="$1"
 	shift 2 # let's shift parameters to eat $MODULE and command name
 	cd "$MODULE" || return
@@ -346,7 +346,7 @@ do
 			switch_module_branch "$MODULE" "$@"
 			;;
 		pull-rebase)
-			git_pull_rebase "$MODULE" "$@"
+			pull_rebase "$MODULE" "$@"
 			;;
 		full-merge)
 			full_merge "$MODULE" "$@"
