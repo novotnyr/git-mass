@@ -30,6 +30,47 @@ die() {
 	exit 1
 }
 
+# Executed before switching directory to a module, as many times as there are modules.
+#
+# Parameters:
+#	1: module name
+_before_module() {
+    MODULE="$1"
+	if [ -d "$MODULE/.git" ]
+	then
+		cd "$MODULE" || return 1
+		return
+	else
+		echo "$GRAY_COLOR$MODULE$NO_COLOR> not a Git repo"
+		return 2
+	fi
+}
+
+# Executed after switching directory to a module, as many times as there are
+# modules.
+#
+# Parameters:
+#	none
+_after_module() {
+	cd .. || return 1
+}
+
+cmd_switch_module_branch() {
+	MODULE="$1"
+	shift
+	BRANCH="$2"
+
+	[ "$BRANCH" ] || die "No branch was specified"
+
+	if has_branch "$BRANCH"
+	then
+		git checkout --quiet "$BRANCH"
+		echo "$GREEN_COLOR$MODULE$NO_COLOR switched to $BRANCH"
+	else
+		echo "$GRAY_COLOR$MODULE$NO_COLOR> No branch $BRANCH"
+	fi
+}
+
 switch_module_branch() {
 	MODULE="$1"
 	BRANCH="$3"
@@ -332,6 +373,32 @@ update_all_remote_branches() {
 
 [ "$COMMAND" ] || die "No command was specified"
 
+# Flag that the command was handled and it is not necessary to process it in a
+# legacy way
+CMD_HANDLED=""
+for MODULE in ./*/
+do
+	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
+
+	if _before_module "$MODULE"
+	then
+		case "$COMMAND" in
+		checkout)
+			cmd_switch_module_branch "$MODULE" "$@"
+			CMD_HANDLED=true
+			;;
+		esac
+
+		_after_module
+	fi
+done
+
+if [ "$CMD_HANDLED" ]
+then
+	exit 0
+fi
+
+
 for MODULE in ./*/
 do
 	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
@@ -341,9 +408,6 @@ do
 		case "$COMMAND" in
 		list)
 			list_module "$MODULE" "$@"
-			;;
-		checkout)
-			switch_module_branch "$MODULE" "$@"
 			;;
 		pull-rebase)
 			pull_rebase "$MODULE" "$@"
