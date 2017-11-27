@@ -108,7 +108,7 @@ cmd_full_merge() {
 		esac
 	done
 	eval SOURCE_BRANCH='$'$OPTIND
-	eval TARGET_BRANCH='$'$(($OPTIND + 1))
+	eval TARGET_BRANCH='$'$((OPTIND + 1))
 	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
 	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
 
@@ -162,7 +162,7 @@ cmd_execute_command() {
 	"$_EXPOSE_PARAMS"
 
 	echo "----------------------------------------------"
-	echo "$MODULE> git $@"
+	echo "$MODULE> git" "$@"
 	git "$@"
 }
 
@@ -234,7 +234,7 @@ cmd_diff_name_only() {
 # the source branch.
 cmd_cleanup_unchanged_branches() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -257,8 +257,8 @@ cmd_cleanup_unchanged_branches() {
 	if [ -z "$DIFF_RESULT" ]
 	then
 		# read does not support color codes. We print colored message without \n
-		printf "$GREEN_COLOR$MODULE$NO_COLOR> $TARGET_BRANCH has no differences with $SOURCE_BRANCH."
-		read -p "Type 'y' to delete it> " INPUT
+		printf "$GREEN_COLOR$MODULE$NO_COLOR> $TARGET_BRANCH has no differences with $SOURCE_BRANCH. Type 'y' to delete it>"
+		read -r INPUT
 		if [ "y" = "$INPUT" ]
 		then
 			git checkout "$SOURCE_BRANCH"
