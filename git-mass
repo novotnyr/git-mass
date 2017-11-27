@@ -71,13 +71,11 @@ cmd_switch_module_branch() {
 	fi
 }
 
-pull_rebase() {
+cmd_pull_rebase() {
 	MODULE="$1"
 	shift 2 # let's shift parameters to eat $MODULE and command name
-	cd "$MODULE" || return
 	RESULT=$(git pull --rebase)
 	echo "$GREEN_COLOR$MODULE$NO_COLOR> $RESULT"
-	cd ..
 }
 
 full_merge() {
@@ -370,6 +368,10 @@ do
 				cmd_switch_module_branch "$MODULE" "$@"
 				CMD_HANDLED=true
 				;;
+			pull-rebase)
+				cmd_pull_rebase "$MODULE" "$@"
+				CMD_HANDLED=true
+				;;
 			esac
 
 			_after_module
@@ -392,9 +394,6 @@ do
 		case "$COMMAND" in
 		list)
 			list_module "$MODULE" "$@"
-			;;
-		pull-rebase)
-			pull_rebase "$MODULE" "$@"
 			;;
 		full-merge)
 			full_merge "$MODULE" "$@"
