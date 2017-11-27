@@ -7,6 +7,8 @@ GREEN_COLOR='\033[0;32m'
 GRAY_COLOR='\033[0;2m'
 NO_COLOR='\033[0m'
 
+_EXPOSE_PARAMS="shift 2"
+
 is_allowed() {
 	for M in $IGNORED_MODULES
 	do
@@ -57,8 +59,8 @@ _after_module() {
 
 cmd_switch_module_branch() {
 	MODULE="$1"
-	shift
-	BRANCH="$2"
+	"$_EXPOSE_PARAMS"
+	BRANCH="$1"
 
 	[ "$BRANCH" ] || die "No branch was specified"
 
@@ -73,16 +75,16 @@ cmd_switch_module_branch() {
 
 cmd_pull_rebase() {
 	MODULE="$1"
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 	RESULT=$(git pull --rebase)
 	echo "$GREEN_COLOR$MODULE$NO_COLOR> $RESULT"
 }
 
-full_merge() {
-	MODULE="$1"
-	shift 2
+cmd_full_merge() {
+	MODULE="$1";
+	"$_EXPOSE_PARAMS"
 	OPTIND=""
-	
+
 	GIT_PUSH="true"
 	COMMIT_MESSAGE_TEXT=""
 	COMMIT_MESSAGE_PARAM="--log --no-edit -m"
@@ -109,87 +111,64 @@ full_merge() {
 	eval TARGET_BRANCH='$'$(($OPTIND + 1))
 	[ "$SOURCE_BRANCH" ] || die "No source branch was specified"
 	[ "$TARGET_BRANCH" ] || die "No target branch was specified"
-	
-	cd "$MODULE" || return
 
 	echo "----------------------------------------------"
 	echo "Merge $SOURCE_BRANCH -> $TARGET_BRANCH> $MODULE"
-	
-	if [ -z "$COMMIT_MESSAGE_TEXT" ] 
+
+	if [ -z "$COMMIT_MESSAGE_TEXT" ]
 	then
 		COMMIT_MESSAGE_TEXT="Merge $SOURCE_BRANCH into $TARGET_BRANCH"
 	fi
-	
+
 	git checkout "$TARGET_BRANCH" && \
 		git branch --set-upstream-to=origin/"$TARGET_BRANCH" && \
 			git pull --rebase &&  \
 				git merge --no-ff $COMMIT_MESSAGE_PARAM "$COMMIT_MESSAGE_TEXT" "$SOURCE_BRANCH" && \
 					"$GIT_PUSH" && \
 						git checkout "$SOURCE_BRANCH"
-	
-	cd ..
 }
 
-last_commit_date() {
+cmd_last_commit_date() {
 	MODULE="$1"
-	BRANCH="$3"
-
-	cd "$MODULE" || return
+	"$_EXPOSE_PARAMS"
+	BRANCH="$1"
 
 	[ "$BRANCH" ] || die "No branch was specified"
 
 	LAST_COMMIT_DATE=$(git log --all --format="%ar;%d" | grep "$BRANCH" | cut -d";" -f1)
 	printf "%-64s %s\n" "$MODULE" "$LAST_COMMIT_DATE"
-
-	cd ..
 }
 
-list_module() {
+cmd_list_module() {
 	MODULE="$1"
-	cd "$MODULE" || return
-	
 	pwd
-	
-	cd ..
 }
 
-reset_hard() {
+cmd_reset_hard() {
 	MODULE="$1"
-	BRANCH="$3"
-	
-	cd "$MODULE" || return
-	
+	"$_EXPOSE_PARAMS"
+	BRANCH="$1"
+
 	[ "$BRANCH" ] || die "No branch was specified" 
 	
 	echo "----------------------------------------------"
 	echo "Resetting (hard) to branch $BRANCH > $MODULE"
 	
 	git reset --hard "$BRANCH"
-	
-	cd ..
 }
 
-execute_command() {
+cmd_execute_command() {
 	MODULE="$1"
-
-	cd "$MODULE" || return
+	"$_EXPOSE_PARAMS"
 
 	echo "----------------------------------------------"
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
-
 	echo "$MODULE> git $@"
-
 	git "$@"
-
-	cd ..
 }
 
-fwdiff() {
+cmd_fwdiff() {
 	MODULE="$1"
-	cd "$MODULE" || return
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -204,7 +183,7 @@ fwdiff() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		cd .. 
+		_after_module
 		return
 	fi
 
@@ -217,15 +196,11 @@ fwdiff() {
 	else
 		echo "$GREEN_COLOR$MODULE$NO_COLOR> $SOURCE_BRANCH is behind $TARGET_BRANCH"
 	fi
-
-	cd ..
 }
 
-diff_name_only() {
+cmd_diff_name_only() {
 	MODULE="$1"
-	cd "$MODULE" || return
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -240,7 +215,7 @@ diff_name_only() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		cd ..
+		_after_module
 		return
 	fi
 
@@ -253,17 +228,13 @@ diff_name_only() {
 	else
 		[ "$VERBOSE" ] && echo "$GRAY_COLOR$MODULE$NO_COLOR> No diff"
 	fi
-
-	cd ..
 }
 
 # Remove a branch that has no changes or diffs with
 # the source branch.
-cleanup_unchanged_branches() {
+cmd_cleanup_unchanged_branches() {
 	MODULE="$1"
-	cd "$MODULE" || return
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -278,7 +249,7 @@ cleanup_unchanged_branches() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		cd ..
+		_after_module
 		return
 	fi
 
@@ -296,15 +267,11 @@ cleanup_unchanged_branches() {
 			echo "$MODULE> $TARGET_BRANCH left intact"
 		fi
 	fi
-
-	cd ..
 }
 
-grep_string() {
+cmd_grep_string() {
 	MODULE="$1"
-	cd "$MODULE" || return
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 
 	REGEXP="$1"
 
@@ -315,16 +282,11 @@ grep_string() {
 		GIT_LOG=$(echo "$GIT_LOG" | xargs -I{} printf '\t%s\n' {})
 		echo "$GIT_LOG"
 	fi
-
-	cd ..
 }
 
-update_all_remote_branches() {
+cmd_update_all_remote_branches() {
 	MODULE="$1"
-
-	cd "$MODULE" || return
-
-	shift 2 # let's shift parameters to eat $MODULE and command name
+	"$_EXPOSE_PARAMS"
 
 	git fetch --all > /dev/null || die "Unable to fetch all remote branches"
 
@@ -346,15 +308,10 @@ update_all_remote_branches() {
 	then
 		echo "$GREEN_COLOR$MODULE$NO_COLOR> Already tracked: $ALREADY_TRACKED_BRANCHES"
 	fi
-
-	cd ..
 }
 
 [ "$COMMAND" ] || die "No command was specified"
 
-# Flag that the command was handled and it is not necessary to process it in a
-# legacy way
-CMD_HANDLED=""
 for MODULE in ./*/
 do
 	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
@@ -364,77 +321,52 @@ do
 		if _before_module "$MODULE"
 		then
 			case "$COMMAND" in
-			checkout)
-				cmd_switch_module_branch "$MODULE" "$@"
-				CMD_HANDLED=true
+			list)
+				cmd_list_module "$MODULE" "$@"
 				;;
-			pull-rebase)
-				cmd_pull_rebase "$MODULE" "$@"
-				CMD_HANDLED=true
+			full-merge)
+				cmd_full_merge "$MODULE" "$@"
+				;;
+			last-commit-date)
+				cmd_last_commit_date "$MODULE" "$@"
+				;;
+			reset-hard)
+				cmd_reset_hard "$MODULE" "$@"
+				;;
+			fwdiff)
+				cmd_fwdiff "$MODULE" "$@"
+				;;
+			dirdiff)
+				cmd_diff_name_only "$MODULE" "$@"
+				;;
+			namediff)
+				cmd_diff_name_only "$MODULE" "$@"
+				;;
+			cleanup-unchanged-brances)
+				cmd_cleanup_unchanged_branches "$MODULE" "$@"
+				;;
+			cub)
+				cmd_cleanup_unchanged_branches "$MODULE" "$@"
+				;;
+			grep)
+				cmd_grep_string "$MODULE" "$@"
+				;;
+			uarb)
+				cmd_update_all_remote_branches "$MODULE" "$@"
+				;;
+			update-all-remote-branches)
+				cmd_update_all_remote_branches "$MODULE" "$@"
+				;;
+			exec)
+				cmd_execute_command "$MODULE" "$@"
+				;;
+			*)
+				echo "Unknown command: $COMMAND"
+				exit 1
 				;;
 			esac
 
 			_after_module
 		fi
-	fi
-done
-
-if [ "$CMD_HANDLED" ]
-then
-	exit 0
-fi
-
-
-for MODULE in ./*/
-do
-	[ -d "$MODULE" ] || die "No module subdirectories. Nothing to do"
-
-	if is_allowed "$MODULE"
-	then
-		case "$COMMAND" in
-		list)
-			list_module "$MODULE" "$@"
-			;;
-		full-merge)
-			full_merge "$MODULE" "$@"
-			;;
-		last-commit-date)
-			last_commit_date "$MODULE" "$@"
-			;;
-		reset-hard)
-			reset_hard "$MODULE" "$@"
-			;;
-		fwdiff)
-			fwdiff "$MODULE" "$@"
-			;;
-		dirdiff)
-			diff_name_only "$MODULE" "$@"
-			;;
-		namediff)
-			diff_name_only "$MODULE" "$@"
-			;;
-		cleanup-unchanged-brances)
-			cleanup_unchanged_branches "$MODULE" "$@"
-			;;
-		cub)
-			cleanup_unchanged_branches "$MODULE" "$@"
-			;;
-		grep)
-			grep_string "$MODULE" "$@"
-			;;
-		uarb)
-			update_all_remote_branches "$MODULE" "$@"
-			;;
-		update-all-remote-branches)
-			update_all_remote_branches "$MODULE" "$@"
-			;;
-		exec)
-			execute_command "$MODULE" "$@"
-			;;
-		*)
-			echo "Unknown command: $COMMAND"
-			exit 1
-			;;
-        esac
 	fi
 done
