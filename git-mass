@@ -59,7 +59,7 @@ _after_module() {
 
 cmd_switch_module_branch() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 	BRANCH="$1"
 
 	[ "$BRANCH" ] || die "No branch was specified"
@@ -75,14 +75,14 @@ cmd_switch_module_branch() {
 
 cmd_pull_rebase() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 	RESULT=$(git pull --rebase)
 	echo "$GREEN_COLOR$MODULE$NO_COLOR> $RESULT"
 }
 
 cmd_full_merge() {
 	MODULE="$1";
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 	OPTIND=""
 
 	GIT_PUSH="true"
@@ -131,7 +131,7 @@ cmd_full_merge() {
 
 cmd_last_commit_date() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 	BRANCH="$1"
 
 	[ "$BRANCH" ] || die "No branch was specified"
@@ -147,7 +147,7 @@ cmd_list_module() {
 
 cmd_reset_hard() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 	BRANCH="$1"
 
 	[ "$BRANCH" ] || die "No branch was specified" 
@@ -160,7 +160,7 @@ cmd_reset_hard() {
 
 cmd_execute_command() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 
 	echo "----------------------------------------------"
 	echo "$MODULE> git" "$@"
@@ -169,7 +169,7 @@ cmd_execute_command() {
 
 cmd_fwdiff() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -201,7 +201,7 @@ cmd_fwdiff() {
 
 cmd_diff_name_only() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 
 	SOURCE_BRANCH="$1"
 	TARGET_BRANCH="$2"
@@ -273,7 +273,7 @@ cmd_cleanup_unchanged_branches() {
 
 cmd_grep_string() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 
 	REGEXP="$1"
 
@@ -289,7 +289,7 @@ cmd_grep_string() {
 
 cmd_update_all_remote_branches() {
 	MODULE="$1"
-	"$_EXPOSE_PARAMS"
+	shift 2 # eat module name and command name
 
 	git fetch --all > /dev/null || die "Unable to fetch all remote branches"
 
