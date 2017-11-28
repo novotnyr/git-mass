@@ -327,6 +327,12 @@ do
 			list)
 				cmd_list_module "$MODULE" "$@"
 				;;
+			checkout)
+				cmd_switch_module_branch "$MODULE" "$@"
+				;;
+			pull-rebase)
+				cmd_pull_rebase "$MODULE" "$@"
+				;;
 			full-merge)
 				cmd_full_merge "$MODULE" "$@"
 				;;
