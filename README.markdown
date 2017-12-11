@@ -67,8 +67,8 @@ Indicates which files have been changed between branches.
 
 Internally, the `git diff --name-only` is used.
 
-Changed files between branches
-------------------------------
+Cleanup unchanged branches
+--------------------------
 Remove feature branch that has no changes against master / production
 branch.
 
@@ -77,6 +77,11 @@ branch.
 Suppose that module contains 'dev' branch which has
 no changes against 'master'. In this case, it can be cleaned
 and removed.
+
+This command is useful when removing feature branches that have
+been not used:
+
+    ./git-mass cleanup-unchanged-branches master gl-0
 
 Hard Reset
 -----------
