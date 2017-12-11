@@ -184,7 +184,6 @@ cmd_fwdiff() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		_after_module
 		return
 	fi
 
@@ -216,7 +215,6 @@ cmd_diff_name_only() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		_after_module
 		return
 	fi
 
@@ -250,7 +248,6 @@ cmd_cleanup_unchanged_branches() {
 		then
 			echo "$MODULE> No branch $SOURCE_BRANCH" 2> /dev/null
 		fi
-		_after_module
 		return
 	fi
 
@@ -351,7 +348,7 @@ do
 			namediff)
 				cmd_diff_name_only "$MODULE" "$@"
 				;;
-			cleanup-unchanged-brances)
+			cleanup-unchanged-branches)
 				cmd_cleanup_unchanged_branches "$MODULE" "$@"
 				;;
 			cub)
